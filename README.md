@@ -8,16 +8,9 @@ The system implements a strict **Layered Architecture (Separation of Concerns)**
 
 ## Pipeline 
 
-[Raw FASTQ Stream] -> (Layer #1: io_handler via Generators)
-│
-▼
-(Layer #2: filter_engine) ── [Drop if Q < 30 / Ns > 5%]
-│
-▼ (High-Quality Reads Only)
-(Layer #3: variant_caller via Lookup Hashing)
-│
-▼
-(Layer #4: reporter via Pandas) -> [Processed CSV Report]
+[Raw FASTQ Stream] → (Layer #1: io_handler via Generators) → (Layer #2: filter_engine) ── [Drop if Q < 30 / Ns > 5%]  →
+
+(High-Quality Reads Only) → (Layer #3: variant_caller via Lookup Hashing) → (Layer #4: reporter via Pandas) -> [Processed CSV Report]
 
 ### Core Components
 
