@@ -1,32 +1,59 @@
 """
 Module: io_handler
-Responsibility: Handle low-memory footprint I/O operations for genomic data.
+Responsibility: Handle low-memory footprint streaming I/O operations for genomic data.
 """
-import gzip
-from Bio import SeqIO
-from typing import Generator, Any
 
-def stream_genomic_records(file_path: str, file_format: str = "fastq") -> Generator[Any, None, None]: #
+import gzip
+import os
+from typing import Generator
+from Bio import SeqIO
+from Bio.SeqRecord import SeqRecord
+
+COMPRESSED_EXTENSIONS = (".fastq.gz", ".fq.gz")
+UNCOMPRESSED_EXTENSIONS = (".fastq", ".fq")
+
+
+def stream_genomic_records(
+    file_path: str, 
+    file_format: str = "fastq"
+) -> Generator[SeqRecord, None, None]:
     """
-    Streams genomic records from plain text or gzipped files (.gz).
-    Maintains O(1) RAM footprint
-    
+    Streams genomic records lazily from compressed (.fastq.gz, .fq.gz) or uncompressed
+    (.fastq, .fq) FASTQ files using Python's native gzip module and Biopython SeqIO.
+
+    Maintains a strict O(1) memory (RAM) footprint by yielding one record at a time
+    via generator evaluation, preventing memory exhaustion when processing large-scale
+    sequencing datasets.
+
+    Args:
+        file_path: Path to the target genomic FASTQ file.
+        file_format: File format expected by Biopython SeqIO (default: 'fastq').
+
+    Yields:
+        SeqRecord: Individual genomic records parsed sequentially.
+
+    Raises:
+        FileNotFoundError: If the specified file does not exist on disk.
+        ValueError: If the file extension is not recognized as a valid FASTQ format.
+        RuntimeError: If an error occurs during file streaming or record parsing.
     """
-    # Dynamically selects the appropriate opening function
-    open_fn = gzip.open if file_path.endswith(".gz") else open
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Target file not found at: {file_path}")
+
+    lower_path = file_path.lower()
+    if lower_path.endswith(COMPRESSED_EXTENSIONS):
+        open_fn = gzip.open
+    elif lower_path.endswith(UNCOMPRESSED_EXTENSIONS):
+        open_fn = open
+    else:
+        raise ValueError(
+            f"Unsupported file format for '{file_path}'. "
+            f"Supported extensions: {COMPRESSED_EXTENSIONS + UNCOMPRESSED_EXTENSIONS}"
+        )
+
     try:
-        with open_fn(file_path, "rt") as handle:
+        with open_fn(file_path, mode="rt", encoding="utf-8") as handle:
             for record in SeqIO.parse(handle, file_format):
                 yield record
-    except FileNotFoundError as e:
-        raise FileNotFoundError(f"Target file not found at: {file_path}") from e
     except Exception as e:
-        raise RuntimeError(f"Error streaming biological data: {str(e)}") from e
-    
-""" si quisieramos usar una lista se veria asi: 
-
-# VERSIÓN CON LISTA (Carga todo de golpe en RAM)
-def read_all_genomic_records(file_path: str, file_format: str = "fastq"):
-    # SeqIO.parse sigue leyendo, pero list() lo obliga a meter TODO en la RAM ya mismo
-    records_list = list(SeqIO.parse(file_path, file_format))
-    return records_list  # Devuelve la lista completa y termina """
+        raise RuntimeError(f"Error streaming biological data from '{file_path}': {str(e)}") from e

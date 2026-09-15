@@ -4,51 +4,70 @@ Responsibility: Identify specific clinical mutations using an external database.
 """
 
 import os
-import pandas as pd
 from functools import lru_cache
+from typing import Any, Dict, Optional
+import pandas as pd
 from Bio.SeqRecord import SeqRecord
-from typing import Dict, Optional
 
-# Define metadata CSV route 
+# Define default path to the clinical metadata CSV registry
 DB_PATH = os.path.join("data", "metadata", "clinical_variants.csv")
 
+
 @lru_cache(maxsize=1)
-def load_clinical_db() -> Dict:
-    """Loads the clinical variants CSV and converts it into an optimized lookup dictionary.
-    
-    Decorated with @lru_cache(maxsize=1) to guarantee an O(1) disk I/O footprint. 
-    Without caching, calling this function inside a high-throughput streaming loop 
-    (e.g., millions of FASTQ reads) causes severe I/O bottlenecks by re-reading 
-    the CSV file from disk on every single record. 
-    
-    The decorator intercepts execution after the first run and returns the in-memory 
-    dictionary directly for all subsequent calls.
-        
+def load_clinical_db(db_path: str = DB_PATH) -> Dict[str, Dict[str, Any]]:
     """
-    if not os.path.exists(DB_PATH):
-        # If file doesn't exists, return empty dict to avoid script collapse 
-        print(f"[WARNING] Clinical database not found at {DB_PATH}. Running without biomarkers.")
+    Loads the clinical variants CSV file and converts it into an in-memory hash map.
+
+    Decorated with @lru_cache(maxsize=1) to ensure an O(1) disk I/O profile.
+    In a production-grade genomic streaming pipeline processing millions of FASTQ
+    reads, querying an uncached database on each read would force repeated disk reads
+    and redundant CSV parsing, introducing severe disk I/O bottlenecks that stall the
+    streaming engine.
+
+    By caching the resulting dictionary after the first read, all subsequent calls
+    bypass disk I/O entirely and retrieve the in-memory lookup table in O(1) time complexity.
+
+    Args:
+        db_path: Filepath to the clinical variants CSV registry.
+
+    Returns:
+        Dict[str, Dict[str, Any]]: Mapping of mutation biomarker sequence patterns to their
+        corresponding clinical metadata (mutation name, phenotype, etc.).
+    """
+    if not os.path.exists(db_path):
+        print(f"[WARNING] Clinical database not found at {db_path}. Running without biomarkers.")
         return {}
-    
-    # Load with Pandas, index secuence and convert to dict
-    df = pd.read_csv(DB_PATH)
+
+    # Load with Pandas, index by biomarker Sequence, and transform into a lookup dictionary
+    df = pd.read_csv(db_path)
     return df.set_index("Sequence").to_dict(orient="index")
 
-def scan_for_clinical_variants(record: SeqRecord) -> Optional[Dict]:
-    """Scans a high-quality read for known clinical mutation biomarkers."""
+
+def scan_for_clinical_variants(record: SeqRecord, db_path: str = DB_PATH) -> Optional[Dict[str, Any]]:
+    """
+    Scans a high-quality read for known clinical mutation biomarkers.
+
+    Args:
+        record: BioPython SeqRecord representing a high-quality genomic read.
+        db_path: Filepath to the clinical variants CSV registry.
+
+    Returns:
+        Optional[Dict[str, Any]]: Variant finding metadata if a biomarker is detected,
+        None otherwise.
+    """
     sequence_str = str(record.seq).upper()
-    
-    # Loads the database dynamically
-    clinical_db = load_clinical_db()
-    
-    # Efficient search in the dictionary loaded from the CSV.
+
+    # Retrieve cached clinical variant lookup dictionary
+    clinical_db = load_clinical_db(db_path)
+
+    # Perform linear sequence matching against biomarker keys
     for marker, info in clinical_db.items():
         if marker in sequence_str:
             return {
                 "Sample_ID": record.id,
                 "Variant_Found": info["Mutation"],
                 "Clinical_Phenotype": info["Phenotype"],
-                "Sequence_Context": marker
+                "Sequence_Context": marker,
             }
-            
+
     return None
