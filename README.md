@@ -1,11 +1,11 @@
-# 🧬 Aether: Production-Grade Bioinformatic Engine
+# 🧬 Aether: High Performance Bioinformatic Engine
 
 [![Python Version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![Testing](https://img.shields.io/badge/QA-Pytest-brightgreen.svg)](https://docs.pytest.org/)
 [![Docker](https://img.shields.io/badge/Container-Docker-2496ED.svg)](https://www.docker.com/)
 [![Workflow](https://img.shields.io/badge/Orchestration-Snakemake-green.svg)](https://snakemake.github.io/)
 
-**Aether** is a high-performance, production-grade genomic data processor designed for real-time Quality Control (QC), sliding-window read trimming, and targeted clinical variant screening. 
+**Aether** is a lightweight, production-grade genomic data processor designed for real-time Quality Control (QC), sliding-window read trimming, and targeted clinical variant screening. 
 
 Built with an $O(1)$ memory streaming pipeline, Aether processes raw or `gzip`-compressed FASTQ files without uncompressing them to disk or exhausting system RAM, making it suitable for high-throughput sequencing (HTS) datasets of any scale.
 
