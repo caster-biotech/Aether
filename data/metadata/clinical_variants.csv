@@ -1,4 +1,5 @@
-Sequence,Mutation,Phenotype
-ATGTACT,E484K,Escape inmunitario (Viral)
-ACCGTTTGA,S450L,Resistencia a Rifampicina (Bacteriano)
-CATGACGTT,S315T,Resistencia a Isoniazida (Bacteriano)
+gene,mutation,sequence_pattern,phenotype,clinical_significance
+BRAF,V600E,GTGATTTTGGTCTAGCTACAGAGAAATCTCGATGGAGT,Melanoma / Colorectal Cancer,Pathogenic
+EGFR,L858R,CGCAGCATGTCAAGATCACAGATTTTGGGCTGGCCAAAC,NSCLC (Lung Cancer),Pathogenic
+KRAS,G12D,CTTGTGGTAGTTGGAGCTGGTGGCGTAGGCAAGAGTGC,Pancreatic / Colorectal Cancer,Pathogenic
+PIK3CA,E545K,GCAATGAACAAATGAATGATGCACATCATGGTGGCTGG,Breast Cancer,Pathogenic
