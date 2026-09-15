@@ -1,11 +1,3 @@
-No hace falta que me pases el `README.md` anterior. Tengo el registro completo de la arquitectura de **Aether**, el flujo de streaming $O(1)$, la lógica de las tres fases, las banderas de la CLI, la suite de pruebas con `pytest`, la integración de DevOps (Docker y Snakemake) y la estrategia de *Targeted Clinical Screening*.
-
-Aquí tienes una versión profesional, completa y estructurada del `README.md` lista para colocar en la raíz de tu repositorio.
-
----
-
-### `README.md` para Aether
-
 ```markdown
 # 🧬 Aether: Production-Grade Bioinformatic Engine
 
