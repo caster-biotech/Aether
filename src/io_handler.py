@@ -2,29 +2,22 @@
 Module: io_handler
 Responsibility: Handle low-memory footprint I/O operations for genomic data.
 """
-
+import gzip
 from Bio import SeqIO
 from typing import Generator, Any
 
 def stream_genomic_records(file_path: str, file_format: str = "fastq") -> Generator[Any, None, None]: #
     """
-    Yields single records from a genomic file. 
-    Defaults to 'fastq' format.
-
-    Streams genomic records one by one using a generator to optimize memory allocation.
-    Safe for low-RAM environments (e.g., Termux/Mobile environments).
+    Streams genomic records from plain text or gzipped files (.gz).
+    Maintains O(1) RAM footprint
     
-    Args:
-        file_path (str): Path to the raw genomic file.
-        file_format (str): Biopython standard format identifier (e.g., 'fastq', 'fasta').
-        
-    Yields:
-        Bio.SeqRecord: A single genomic record object.
     """
+    # Dynamically selects the appropriate opening function
+    open_fn = gzip.open if file_path.endswith(".gz") else open
     try:
-        # SeqIO.parse returns an iterator, keeping memory usage at O(1)
-        for record in SeqIO.parse(file_path, file_format):
-            yield record
+        with open_fn(file_path, "rt") as handle:
+            for record in SeqIO.parse(handle, file_format):
+                yield record
     except FileNotFoundError as e:
         raise FileNotFoundError(f"Target file not found at: {file_path}") from e
     except Exception as e:
